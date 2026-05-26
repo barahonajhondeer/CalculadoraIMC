@@ -30,6 +30,8 @@ fun PantallaInicio() {
     var peso by remember { mutableStateOf("") }
     var altura by remember { mutableStateOf("") }
 
+    var error by remember { mutableStateOf(false) }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -75,9 +77,36 @@ fun PantallaInicio() {
         )
 
         Spacer(modifier = Modifier.height(20.dp))
+        if (error) {
+            Text(
+                text = "Por favor, ingresa valores válidos",
+                color = Color.Red
+            )
 
+            Spacer(modifier = Modifier.height(10.dp))
+        }
         Button(
-            onClick = { }
+            onClick = {
+
+                val pesoDouble = peso.toDoubleOrNull()
+                val alturaDouble = altura.toDoubleOrNull()
+
+                if (
+                    pesoDouble == null ||
+                    alturaDouble == null ||
+                    pesoDouble <= 0 ||
+                    alturaDouble <= 0
+                ) {
+                    error = true
+                } else {
+                    error = false
+
+                    val imc =
+                        pesoDouble / (alturaDouble * alturaDouble)
+
+                    println(imc)
+                }
+            }
         ) {
             Text("Calcular")
         }
