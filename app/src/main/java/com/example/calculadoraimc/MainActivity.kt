@@ -12,19 +12,60 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavHostController
+import androidx.navigation.NavType
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         setContent {
-            PantallaInicio()
+
+            val navController = rememberNavController()
+
+            NavHost(
+                navController = navController,
+                startDestination = "inicio"
+            ) {
+
+                composable("inicio") {
+                    PantallaInicio(navController)
+                }
+
+                composable(
+                    route = "resultado/{nombre}/{imc}",
+                    arguments = listOf(
+                        navArgument("nombre") {
+                            type = NavType.StringType
+                        },
+                        navArgument("imc") {
+                            type = NavType.FloatType
+                        }
+                    )
+                ) { backStackEntry ->
+
+                    val nombre =
+                        backStackEntry.arguments?.getString("nombre") ?: ""
+
+                    val imc =
+                        backStackEntry.arguments?.getFloat("imc") ?: 0f
+
+                    PantallaResultado(
+                        nombre = nombre,
+                        imc = imc,
+                        navController = navController
+                    )
+                }
+            }
         }
     }
-}
-
 @Composable
-fun PantallaInicio() {
+fun PantallaInicio(navController: NavHostController
+) {
 
     var nombre by remember { mutableStateOf("") }
     var peso by remember { mutableStateOf("") }
@@ -104,11 +145,85 @@ fun PantallaInicio() {
                     val imc =
                         pesoDouble / (alturaDouble * alturaDouble)
 
-                    println(imc)
+                    navController.navigate(
+                        "resultado/$nombre/${imc.toFloat()}")
                 }
             }
         ) {
             Text("Calcular")
         }
     }
+}
+        @Composable
+        fun PantallaResultado(
+            nombre: String,
+            imc: Float,
+            navController: NavHostController
+        ) {
+
+            val categoria: String
+            val colorCategoria: Color
+
+            when {
+
+                imc < 18.5 -> {
+                    categoria = "Bajo peso"
+                    colorCategoria = Color.Red
+                }
+
+                imc < 25 -> {
+                    categoria = "Peso normal"
+                    colorCategoria = Color.Green
+                }
+
+                imc < 30 -> {
+                    categoria = "Sobrepeso"
+                    colorCategoria = Color(0xFFFF9800)
+                }
+
+                else -> {
+                    categoria = "Obesidad"
+                    colorCategoria = Color.Red
+                }
+            }
+
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(20.dp),
+
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+
+                Text(
+                    text = "Hola $nombre, tu resultado es:"
+                )
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                Text(
+                    text = String.format("IMC: %.1f", imc),
+                    style = MaterialTheme.typography.headlineMedium
+                )
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                Text(
+                    text = categoria,
+                    color = colorCategoria,
+                    style = MaterialTheme.typography.headlineSmall
+                )
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                Button(
+                    onClick = {
+                        navController.popBackStack()
+                    }
+                ) {
+                    Text("Volver")
+                }
+            }
+        }
 }
